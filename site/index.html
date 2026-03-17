@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Operações</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css?v=20260316g">
+</head>
+<body>
+
+<!-- CONFIG MODAL -->
+<div class="config-modal" id="configModal">
+  <div class="config-box">
+    <div class="config-title">⚡ Firebase conectado automaticamente</div>
+    <div class="config-sub">Este dashboard usa conexão em tempo real no backend com a conta de serviço configurada no servidor. O usuário final nao precisa preencher credenciais.</div>
+
+    <button class="config-btn" onclick="connectFirebase()">Reconectar stream</button>
+
+    <div class="config-hint">
+      A referência ativa no backend é <code>https://logs-iops-default-rtdb.firebaseio.com/logs/Ativa%C3%A7%C3%B5es</code>.<br><br>
+      Você também pode <strong>carregar um arquivo JSON exportado</strong> para visualização offline:
+      <br><br>
+      <input type="file" id="jsonFileInput" accept=".json" style="font-size:11px; color: var(--muted);" onchange="loadFromFile(this)">
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">
+        <h1 id="dashboardTitle">Ativações</h1>
+        <span id="dashboardSubtitle">Dashboard de Acompanhamento</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="theme-toggle" id="themeToggleBtn" type="button" onclick="toggleTheme()">☀ Modo Claro</button>
+      <div class="live-badge" id="liveBadge" style="display:none">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+      <span class="last-update" id="lastUpdate">—</span>
+    </div>
+  </header>
+
+  <!-- DATE FILTER -->
+  <div class="date-filter">
+    <span class="filter-label">Projeto</span>
+    <select class="project-select" id="projectSelect" onchange="onProjectChange(this.value)">
+      <option value="ativacoes">Ativações</option>
+      <option value="conferencia">Conferência de Fluxo</option>
+    </select>
+    <span class="filter-label">Período</span>
+    <div class="date-btns" id="dateBtns">
+      <button class="date-btn" onclick="setRange('today')">Hoje</button>
+      <button class="date-btn" onclick="setRange('7d')">7 dias</button>
+      <button class="date-btn" onclick="setRange('30d')">30 dias</button>
+      <button class="date-btn" onclick="setRange('all')">Tudo</button>
+    </div>
+    <div class="date-range">
+      <input type="date" class="date-input" id="dateFrom" onchange="onRangeChange()">
+      <span class="date-range-sep">→</span>
+      <input type="date" class="date-input" id="dateTo" onchange="onRangeChange()">
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi purple">
+      <div class="kpi-label" id="kpiTotalLabel">Total Casos</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+      <div class="kpi-sub" id="kpiTotalSub">processados</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label" id="kpiFinalizadosLabel">Sucessos</div>
+      <div class="kpi-value" id="kpiFinalizados">—</div>
+      <div class="kpi-sub" id="kpiFinalizadosSub">finalizados</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label" id="kpiErrosLabel">Erros</div>
+      <div class="kpi-value" id="kpiErros">—</div>
+      <div class="kpi-sub" id="kpiErrosSub">sem resolução</div>
+    </div>
+    <div class="kpi warn">
+      <div class="kpi-label" id="kpiCanceladosLabel">Cancelados/Incorretos</div>
+      <div class="kpi-value" id="kpiCancelados">—</div>
+      <div class="kpi-sub" id="kpiCanceladosSub">ou incorretos</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label" id="kpiRodagensLabel">Rodando</div>
+      <div class="kpi-value" id="kpiRodagens">—</div>
+      <div class="kpi-sub" id="kpiRodagensSub">Em Andamento</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+    <!-- CASOS TABLE -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Casos</div>
+        <div class="panel-count" id="casosCount">—</div>
+      </div>
+      <div class="casos-search">
+        <input type="text" class="search-input" placeholder="Buscar por caso, proposta, máquina..." id="searchInput" oninput="filterCasos()">
+      </div>
+      <div class="table-scroll">
+        <div id="casosContent">
+          <div class="no-firebase">
+            <div class="icon">🔌</div>
+            <p>Conectando automaticamente ao Firebase em tempo real...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MACHINES -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-head-info">
+          <div class="panel-title">Máquinas</div>
+          <div class="panel-meta" id="machinesVersionMeta">Versão mais recente: —</div>
+        </div>
+        <div class="panel-count" id="machinesCount">—</div>
+      </div>
+      <div class="machines-list" id="machinesList">
+        <div class="loading"><div class="spinner" style="display:none"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM GRID -->
+  <div class="bottom-grid">
+    <!-- RECENT EVENTS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Eventos Recentes</div>
+      </div>
+      <div class="events-list" id="eventsList">
+        <div class="empty">Nenhum evento</div>
+      </div>
+    </div>
+
+    <!-- ERRORS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Erros Recentes</div>
+        <div class="panel-count" id="errorsCount">—</div>
+      </div>
+      <div class="errors-list" id="errorsList">
+        <div class="empty">Nenhum erro</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">—</div>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script src="./app.js?v=20260316g" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "dashboard_firebase",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard Firebase para monitoramento de ativacoes em tempo real",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

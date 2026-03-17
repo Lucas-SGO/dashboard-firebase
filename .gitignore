@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.*
+.DS_Store
+npm-debug.log*
+*adminsdk*.json
+*.pem
+*.key
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*-cache.json
+logs/
+
