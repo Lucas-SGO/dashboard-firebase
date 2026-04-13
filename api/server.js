@@ -4,7 +4,7 @@ const express = require('express');
 const admin = require('firebase-admin');
 
 const PORT = Number(process.env.PORT || 3010);
-const FIREBASE_DB_URL = process.env.FIREBASE_DB_URL || 'https://logs-iops-default-rtdb.firebaseio.com';
+const FIREBASE_DB_URL = process.env.FIREBASE_DB_URL || 'URL-FIREBASE-AQUI';
 const SERVICE_ACCOUNT_PATH = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
   || path.join(__dirname, '..', 'logs-iops-firebase-adminsdk-fbsvc-9ab3d463b5.json');
 const LOCAL_CACHE_DIR = process.env.LOCAL_CACHE_DIR || path.join(__dirname, 'data');
